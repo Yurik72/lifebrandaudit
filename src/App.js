@@ -1,25 +1,29 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { observer } from 'mobx-react';
+import Stage from './components/stage';
+import FinalResult from './components/finalresult';
+import  './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
 
-export default App;
+const App = observer(({ storage })=> {
+    const { sortedStagesWithTask, toogleTaskState, allDone,reset } = storage;
+   
+    return (
+            <>
+            <div className="container shadow my-2">
+                
+                {sortedStagesWithTask.map(stage => (
+                    <Stage
+                        toogleTaskState={toogleTaskState}
+                        stage={stage}
+                        key={stage.id}
+                    ></Stage>
+                ))}
+            </div>
+            {allDone && <FinalResult reset={ reset}/>}
+            </>
+        );
+    })
+
+//ReactDOM.render(<App storage={store } />, document.getElementById('root'));
+export default App
