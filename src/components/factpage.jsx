@@ -1,14 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { useFacts } from "../services/fact";
+import React, { useState, useEffect,useContext } from "react";
+import { useFacts,useUpdateFact } from "../services/fact";
 import DataLoader from "./dataloader";
+import { GlobalStateProvider,GlobalStateContext} from '../services/globalstate'
+
+
 const FactPage = (props) => {
   const [substype, setsubstype] = useState("Montly");
+
   const handlechangetype = () => {
     if (substype == "Montly") setsubstype("Yearly");
     else setsubstype("Montly");
   };
+
+  const [state, setState]=useContext(GlobalStateContext)
   const usefacts = useFacts();
   const { status, data, error, isFetching } = usefacts;
+  const {mutate,mutateAsync}=useUpdateFact();
+  const handleupdate =  async () => {
+    const tobeupdate={...data}
+    tobeupdate.source='1'+tobeupdate.source
+    mutate(tobeupdate)
+    //await mutateAsync(tobeupdate)
+  };
 
   return (
     <>
@@ -21,12 +34,18 @@ const FactPage = (props) => {
       <div className="flex flex-col" onClick={handlechangetype}>
         Change Type {substype}
       </div>
+      <div className="flex flex-col my-2 bg-secondary" onClick={handleupdate}>
+        update {data && (<>{data.source}</>)}
+      </div>
+      <div className="flex flex-col bg-primary" onClick={handlechangetype}>
+        GlobState AsaConsumerCode {state.AsaConsumerCode}
+      </div>
 
-      <div className="flex flex-row">
+      <div className="d-flex flex-row">
         {data && (
           <>
-            <div className="flex flex-col">{data.source}</div>
-            <div className="flex flex-col">{data.text}</div>
+            <div className="d-flex flex-column px-2">{data.source}</div>
+            <div className="d-flex flex-column">{data.text}</div>
           </>
         )}
       </div>

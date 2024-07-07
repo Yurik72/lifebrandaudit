@@ -1,55 +1,47 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
-const RentSection = ({ substype }) => {
-  switch (substype) {
-    case "Montly":
-      return <div className="flex flex-col">Montly section</div>;
-      break;
-    case "Yearly":
-      return <div className="flex flex-col">YerlySection</div>;
-      break;
-  }
+
+
+import FinalResult from "./components/finalresult";
+import Payment from "./components/payment";
+import FactPage from "./components/factpage";
+import {  QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
+import { GlobalStateProvider,GlobalStateContext} from './services/globalstate'
+import "./App.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  },
+});
+const persister = createSyncStoragePersister({
+    storage: window.localStorage,
+  })
+const ReportContent = (launcher) => {
+  //console.log(launcher);
+  return <div>rendre</div>;
 };
-const Payment = (props) => {
-  const [substype, setsubstype] = useState("Montly");
-  const { child } = props;
-  const handlechangetype = () => {
-    if (substype == "Montly") setsubstype("Yearly");
-    else setsubstype("Montly");
-  };
-  //console.log(props);
 
-  const launchPayment = (x) => {
-    //console.log(x);
-    return (
-      <>
-        <div>content</div>
-      </>
-    );
-  };
+const App = () => {
   return (
     <>
-      <h2 className=" due-font-service  text-center poppins-thin mt-10 mb-4  ">
-        Improve my score -!
-        {child()}
-      </h2>
-
-      <div className="flex flex-col" onClick={handlechangetype}>
-        Change Type {substype}
-      </div>
-      <RentSection substype={substype} />
-      <div className="flex flex-col">
-        <div
-          className=" p-3 px-4 rounded-xl w-[85%] mx-auto mb-4 custom-div "
-          onClick={() => {}}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">{child(launchPayment)}</div>
-          </div>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+        <GlobalStateProvider>
+        <div>
+          <FactPage />
+          <Payment test="23213" child={ReportContent}>
+            <div>Test</div>
+          </Payment>
         </div>
-      </div>
+        </GlobalStateProvider>
+      </PersistQueryClientProvider>
     </>
   );
 };
 
-export default Payment;
+//ReactDOM.render(<App storage={store } />, document.getElementById('root'));
+export default App;
