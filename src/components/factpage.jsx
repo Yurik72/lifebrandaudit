@@ -1,5 +1,5 @@
 import React, { useState, useEffect,useContext } from "react";
-import { useFacts,useUpdateFact } from "../services/fact";
+import { useFacts,useUpdateFact,useUpdatableFacts } from "../services/fact";
 import DataLoader from "./dataloader";
 import { GlobalStateProvider,GlobalStateContext} from '../services/globalstate'
 
@@ -13,13 +13,13 @@ const FactPage = (props) => {
   };
 
   const [state, setState]=useContext(GlobalStateContext)
-  const usefacts = useFacts();
-  const { status, data, error, isFetching } = usefacts;
-  const {mutate,mutateAsync}=useUpdateFact();
+  const usefacts = useUpdatableFacts();
+  const { status, data, error, isFetching,update } = usefacts;
+  
   const handleupdate =  async () => {
     const tobeupdate={...data}
     tobeupdate.source='1'+tobeupdate.source
-    mutate(tobeupdate)
+    update(tobeupdate)
     //await mutateAsync(tobeupdate)
   };
 

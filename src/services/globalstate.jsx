@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
  
-const initialData={
-    AsaConsumerCode:0,
-    Token:''
-}
 
+const initialData={asaConsumerCode:1729207976,Token:''}
 const GlobalStateContext = React.createContext();
  
 const GlobalStateProvider = ({ children }) => {
