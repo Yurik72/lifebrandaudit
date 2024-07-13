@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
  
+interface IGlobalState{
+  asaConsumerCode:number,
+  token:string
+}
 
-const initialData={asaConsumerCode:1729207976,Token:''}
+const initialData:IGlobalState={asaConsumerCode:1559428920,token:''}  //1559428920  //1729207976
 const GlobalStateContext = React.createContext();
  
 const GlobalStateProvider = ({ children }) => {
@@ -14,4 +18,4 @@ const GlobalStateProvider = ({ children }) => {
   );
 };
 
-export { GlobalStateProvider,GlobalStateContext}
+export { GlobalStateProvider,GlobalStateContext,IGlobalState}

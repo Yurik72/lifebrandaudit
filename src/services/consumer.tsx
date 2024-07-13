@@ -1,6 +1,6 @@
 import axios, { AxiosHeaders }  from "axios";
 import {useGenericQuery,useUpdatableGenericQuery,useGenericMutateUpdate,getHeaders} from './basequery.ts'
-import { GlobalStateContext} from '../services/globalstate'
+import { GlobalStateContext} from '../services/globalstate.tsx'
 import React, { useState, useEffect,useContext } from "react";
 const CONSUMER_QUERY='consumer'
 
@@ -37,8 +37,8 @@ function useConsumer() {
   const [state]=useContext(GlobalStateContext)
   const {asaConsumerCode}=state
   
-  return useGenericQuery([CONSUMER_QUERY,asaConsumerCode],async ()=>await getConsumer(asaConsumerCode))
-  
+  //return useGenericQuery([CONSUMER_QUERY,asaConsumerCode],async ()=>await getConsumer(asaConsumerCode))
+  return useGenericQuery([CONSUMER_QUERY,asaConsumerCode],'Consumer')
 }
 
 export {useConsumer}

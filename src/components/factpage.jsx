@@ -1,7 +1,7 @@
 import React, { useState, useEffect,useContext } from "react";
 import { useFacts,useUpdateFact,useUpdatableFacts } from "../services/fact";
 import DataLoader from "./dataloader";
-import { GlobalStateProvider,GlobalStateContext} from '../services/globalstate'
+import { GlobalStateProvider,GlobalStateContext} from '../services/globalstate.tsx'
 
 
 const FactPage = (props) => {

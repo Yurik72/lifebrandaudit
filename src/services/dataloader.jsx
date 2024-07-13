@@ -11,8 +11,8 @@ const DataLoaderProvider = ({ children }) => {
   return (
     <DataLoaderContext.Provider value={[setLoading,setError]}>
     <>
-      <div className=''>
-        Data Loader State {isLoading?'True':'False'}
+      <div className={isLoading?'bg-warning':''}>
+        Data Loader State {isLoading?'Loading':'Done'}
         {isError &&
           <div className='bg-danger'>
             Error

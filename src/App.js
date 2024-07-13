@@ -9,7 +9,7 @@ import ConsumerPage from "./components/consumerpage.tsx";
 import {  QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
-import { GlobalStateProvider,GlobalStateContext} from './services/globalstate'
+import { GlobalStateProvider,GlobalStateContext} from './services/globalstate.tsx'
 import { DataLoaderProvider} from './services/dataloader'
 import "./App.css";
 

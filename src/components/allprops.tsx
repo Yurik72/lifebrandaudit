@@ -4,7 +4,7 @@ const AllProps =({src})=>
 {
     Object.keys(src).map((key) => {
       return ( 
-      <>
+      <div key={key}>
      
       <div className="whiteSpaceNoWrap">
       <span className="whiteSpaceNoWrap">{key} : </span>
@@ -14,7 +14,7 @@ const AllProps =({src})=>
           ?"---":src[key]
         }
         </div>
-        </>
+        </div>
         )
     })
 }
