@@ -6,7 +6,7 @@ interface IGlobalState{
 }
 
 const initialData:IGlobalState={asaConsumerCode:1559428920,token:''}  //1559428920  //1729207976
-const GlobalStateContext = React.createContext();
+const GlobalStateContext = React.createContext<[IGlobalState,React.Dispatch<React.SetStateAction<IGlobalState>>]>();
  
 const GlobalStateProvider = ({ children }) => {
   const [state, setState] = useState(initialData);
