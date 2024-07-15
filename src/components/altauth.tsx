@@ -5,7 +5,9 @@ import {getHeaders} from '../services/basequery.ts'
 import { GlobalStateContext} from '../services/globalstate.tsx'
 import React, { useState, useEffect,useContext, Dispatch } from "react";
 import Config from '../config.tsx';
-import { Container, Row, Col, Form } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';
+import { Accordion } from 'react-bootstrap';
+
 
 interface IAsaResponse<TData>{
     message:string
@@ -18,14 +20,19 @@ interface  IVerificationParam{
     parameterDescription:string
 
 } 
+
 interface  IVerificationOption extends IVerificationParam{
-    parameterName:string
+    
     parameterValue:any
-} 
+}
 interface IVerificationOptionResponse extends IVerificationOption{
-    isChanged:boolean
+    isRequired:boolean,
     isMatched:boolean
-    isRequired:boolean
+}
+interface IVerificationResponse {
+    email:string
+    phoneNumber:string
+    verificationOptions:IVerificationOptionResponse[]
 
 }
 interface IAutheticateData{
@@ -44,34 +51,46 @@ interface IPostData{
     asaConsumerCode:Number
     authenticateRealtime:Boolean
     verificationOptions:IVerificationOption[]
+    debugEmail:string
+    debugPhone:string
 }
 enum AuthStateEnum{
     AccountSelection,
     AccountConfirmation,
     NoAccount,
+    AccountConfirmed
 
 } 
 interface IAuthState{
     lastStep:number,
     ErrorCode:String,
     isError:Boolean,
-    lastResponse:IAsaResponse<IVerificationOptionResponse> | undefined,
+    lastResponse:IAsaResponse<IVerificationResponse> | undefined,
     currentstep:number,
     enters:Object
-    authstate:AuthStateEnum
+    authstate:AuthStateEnum,
+    isCodeSent:boolean
 }
 
-const AuthState:IAuthState={
+
+const AuthState: IAuthState={
     lastStep:0,
     ErrorCode:'',
     isError:false,
     lastResponse:undefined,
     currentstep:0,
     enters:{},
-    authstate:AuthStateEnum.AccountSelection
+    authstate:AuthStateEnum.AccountSelection,
+    isCodeSent:false
 }
-
-var groupBy = function(xs, key) {
+function isIterable(obj) {
+    // checks for null and undefined
+    if (obj == null) {
+      return false;
+    }
+    return typeof obj[Symbol.iterator] === 'function';
+  }
+function groupBy(xs:[], key:string) {
     return xs.reduce((rv, x) =>{
         (rv[x[key]] = rv[x[key]] || []).push(x);
         return rv;
@@ -81,7 +100,58 @@ var groupBy = function(xs, key) {
     },[]); 
     //{} if we need dictionary
 };
-
+const renderConfirmation=(email:string,phone:string)=>
+    <Container>
+        <Row className="align-items-center">
+            <Col xs={12} md={3}>
+            <Form.Label>Email</Form.Label>
+            </Col>
+            <Col xs={12} md={9}>
+            <Form.Control
+                type="text"
+                value={email}
+                readOnly={true}
+            />
+            </Col>
+        </Row>
+        <Row className="align-items-center">
+            <Col xs={12} md={3}>
+            <Form.Label>Phone</Form.Label>
+            </Col>
+            <Col xs={12} md={9}>
+            <Form.Control
+                type="text"
+                value={phone}
+                readOnly={true}
+            />
+            </Col>
+        </Row>
+    </Container>
+const renderConfirmationCode=(enteredVars,setenteredVars,sendRequest)=>{
+    const setOptionValue=(val)=>{
+        setenteredVars({...enteredVars,EmailVerificationCode:val,PhoneVerificationCode:val})
+    }
+    console.log(enteredVars)
+return(
+    <Container>
+        <Row className="align-items-center">
+            <Col xs={12} md={3}>
+            <Form.Label>Verification Code</Form.Label>
+            </Col>
+            <Col xs={12} md={9}>
+            <Form.Control
+                type="text"
+                value={enteredVars.EmailVerificationCode}
+                onChange={(e)=>setOptionValue(e.target.value)}
+            />
+            </Col>
+        </Row>
+        <Row>
+            <Button className='bg-primary'  onClick={async(e)=>await sendRequest([])}>Send code</Button>
+        </Row>
+    </Container>    
+    )
+}
 const renderOptions=(options:IVerificationParam[],enteredVars,setenteredVars)=>{
     //console.log('render options',options)
     const setOptionValue=(optionname,val)=>{
@@ -95,7 +165,7 @@ const renderOptions=(options:IVerificationParam[],enteredVars,setenteredVars)=>{
     return(
         <>
          <div>
-                {options.map((o)=>{
+                {isIterable(options) && options.map((o)=>{
                     return(
                         <Container key={o.parameterName} className="mt-5">
                         <Row className="parameter-container">
@@ -156,47 +226,99 @@ const  AltAuth=() =>{
             asaFiCode:asaFiCode,
             asaConsumerCode:asaConsumerCode,
             authenticateRealtime:true,
+            debugEmail:'yurik.kovalenko@gmail.com',
+            debugPhone:'+380503121075',
             verificationOptions:vars
         }
     }
     const getCurrentOption=()=>{
         return dfltVars[authState.currentstep]
     }
+    const sendConfirmationCodeRequest=async ()=>{
+        const requestCodeParam:IVerificationParam[]=[
+            {parameterName:'EmailVerificationCode',parameterValue:'request'},
+            {parameterName:'PhoneVerificationCode',parameterValue:'request'}
+        ]
+        await sendRequest(requestCodeParam)
+        setauthState({...authState,isCodeSent:true,currentstep:dfltVars.length})
+    }
     const skip=()=>{
         setauthState({...authState,currentstep:authState.currentstep+1})
     }
-    const  forward=async ()=>{
-        const params=dfltVars.slice(0,authState.currentstep+1).flat().map((o)=>{
-            return {parameterName:o.parameterName,parameterValue:enteredVars[o.parameterName]}
-        })
-        setisLoad(true)
-        var response=await postAuthenticate(asaConsumerCode,makePostData(params))
-        console.log(response)
-        setauthState({...authState,lastResponse:response,
-            ErrorCode:response.data.errorCode,
-            isError:response.status!=200,
-            currentstep:authState.currentstep+1,
-            authstate:response.data.authenticationStep as unknown as AuthStateEnum || AuthStateEnum.AccountSelection
-        })
-        setisLoad(false)
+    const forward=async ()=>{
+        await sendRequest([])
+    }
+    const  sendRequest=async (extraParams:IVerificationParam[]  )=>{
+        try
+            {
+            setisLoad(true)
+            const params=[...dfltVars.slice(0,authState.currentstep+1).flat().map((o)=>{
+                return {parameterName:o.parameterName,parameterValue:enteredVars[o.parameterName]}
+            }),...extraParams]
+            
+            var response=await postAuthenticate(asaConsumerCode,makePostData(params))
+            console.log(response)
+            setauthState({...authState,lastResponse:response,
+                ErrorCode:response.data.errorCode,
+                isError:response.status!=200,
+                currentstep:authState.currentstep+1,
+                authstate:AuthStateEnum[response.data.authenticationStep] 
+            })
+        }
+        catch(err)
+        {
+            console.log(err)
+        }
+        finally{
+            setisLoad(false)
+        }
     }
     const back=()=>{
         setauthState({...authState,currentstep:authState.currentstep-1})
     }
     const renderNextInput=()=>{
-        return (
-            <>
-            {renderOptions(getCurrentOption(),enteredVars,setenteredVars)}
-            <div className='d-flex justify-content-between p-3 bg-light'>
-                <input className='btn btn-primary' type='button' value="prev" onClick={back} disabled={authState.currentstep===0} />
-                <input className='btn btn-primary' type='button' value="next"  onClick={forward} disabled={authState.currentstep>=(dfltVars.length-1)}/>
+        console.log('renderNextInput',authState.authstate,AuthStateEnum.AccountConfirmation)
+        if (!authState.authstate || authState.authstate===AuthStateEnum.AccountSelection){
+            return (
+                <>
+                {renderOptions(getCurrentOption(),enteredVars,setenteredVars)}
+                <div className='d-flex justify-content-between p-3 bg-light'>
+                    <input className='btn btn-primary' type='button' value="prev" onClick={back} disabled={authState.currentstep===0} />
+                    <input className='btn btn-primary' type='button' value="next"  onClick={forward} disabled={authState.currentstep>=(dfltVars.length-1)}/>
 
-            </div>
-            <div className='d-flex justify-content-between p-3 bg-light'>
-                <input className='btn btn-secondary' type='button' value="skip" onClick={skip}  disabled={authState.currentstep>=(dfltVars.length-1)}/>
-            </div>
-            </>
-        )
+                </div>
+                <div className='d-flex justify-content-between p-3 bg-light'>
+                    <input className='btn btn-secondary' type='button' value="skip" onClick={skip}  disabled={authState.currentstep>=(dfltVars.length-1)}/>
+                </div>
+                </>
+            )
+        }
+        else if(authState.authstate==AuthStateEnum.AccountConfirmation){
+           if(authState.isCodeSent)
+           {
+            return(
+                <>
+                {renderConfirmationCode(enteredVars,setenteredVars,sendRequest)}
+                <div className='d-flex justify-content-between p-3 bg-light'>
+                    <input className='btn btn-info' type='button' value='ReSend Code' onClick={sendConfirmationCodeRequest}  />
+
+                </div>                
+                </>
+            )
+           }
+           else{
+            return(
+                <>
+                {renderConfirmation(authState.lastResponse.data.email,authState.lastResponse.data.phoneNumber)}
+                <div className='d-flex justify-content-between p-3 bg-light'>
+                    <input className='btn btn-info' type='button' value='Send Code' onClick={sendConfirmationCodeRequest}  />
+
+                </div>                
+                </>
+            )
+        }
+        }
+        
     }
     useEffect(() => {
         async function fetchData() {
@@ -230,7 +352,7 @@ const  AltAuth=() =>{
         )
     }
     return (
-    <>
+    <Container>
         <h2>Alternative Authentication</h2>
         {authState.isError && 
             <div>
@@ -252,7 +374,30 @@ const  AltAuth=() =>{
                 }
             </div>
         }
-    </>
+    <Accordion defaultActiveKey="-1">
+      <Accordion.Item eventKey="0">
+            <Accordion.Header>Entered details</Accordion.Header>
+            <Accordion.Body>
+                <Container>
+                {authState.lastResponse && 
+                    authState.lastResponse.data.verificationOptions.map((p)=>{
+                        return(
+                            <Row className={p.isMatched?'bg-success':'bg-danger'}>
+                                <Col>
+                                    {p.parameterName}
+                                </Col>
+                                <Col className='col'>
+                                    {p.parameterValue}
+                                </Col>
+                            </Row>
+                        )
+                    })
+                }
+                </Container>
+            </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
+    </Container>
     )
 }
 
